@@ -24,7 +24,7 @@ variable "ah_ssh_keys" {
   description = "ssh key for nodes"
 }
 
-variable "gsfs_node_count" {
+variable "gfs_node_count" {
   description = "instance count"
   default     = "1"
 }
@@ -46,8 +46,14 @@ variable "inventory_file" {
   type = string
 }
 
-variable "site_provision" {
+variable "site_provision_yml" {
   description = "ansible provision"
   default     = "site.yml"
   type = string
 }
+
+variable "private_ip_range" {
+  description = "Private network number for ip generation"
+  type = string
+}
+
