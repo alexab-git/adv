@@ -1,12 +1,14 @@
 all:
   children:
-    gfs-nodes:
+    gfs_nodes:
       hosts:
-    %{ for ip in gfs-nodes-ip ~}
-      ${ip}
+    %{ for index, name in gfs-nodes-name ~}
+      ${name}:
+            ansible_host: ${gfs-nodes-ip[index]} 
     %{ endfor ~}
-    storage:
+storage:
       hosts:
-    %{ for ip in storage-ip ~}
-      ${ip}
+    %{ for index, name in storage-name ~}
+      ${name}:
+            ansible_host: ${storage-ip[index]} 
     %{ endfor ~}

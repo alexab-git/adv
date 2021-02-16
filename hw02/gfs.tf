@@ -22,14 +22,29 @@ resource "ah_private_network" "storage" {
   name = "Storage network"
 }
 
+
+resource "ah_volume" "block-storage" {
+  depends_on = [ ah_cloud_server.storage ]
+  name = "Block storage"
+  product = var.storage_product
+  file_system = ""
+  size = var.storage_size
+}
+
+resource "ah_volume_attachment" "block-storage" {
+  depends_on = [ ah_volume.block-storage ]
+  cloud_server_id = ah_cloud_server.storage.id
+  volume_id = ah_volume.block-storage.id
+}
+
 resource "ah_private_network_connection" "gfs-nodes-storage" {
   depends_on = [ ah_private_network.storage, ah_cloud_server.gfs-node ]
   count      = var.gfs_node_count
   cloud_server_id =  ah_cloud_server.gfs-node[count.index].id
   private_network_id = ah_private_network.storage.id
   ip_address = "${var.private_ip_range}.${count.index+200}"
-
 }
+
 resource "ah_private_network_connection" "storage" {
   depends_on = [ ah_private_network.storage, ah_cloud_server.storage ]
   cloud_server_id =  ah_cloud_server.storage.id
@@ -37,6 +52,7 @@ resource "ah_private_network_connection" "storage" {
   ip_address = "${var.private_ip_range}.100"
 
 }
+
 
 
   #provision

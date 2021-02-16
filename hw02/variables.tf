@@ -33,7 +33,6 @@ variable "storage_node_count" {
   default     = "1"
 }
 
-
 variable "ssh_user" {
   description = "ssh user for vm management"
   default     = "adminroot"
@@ -57,3 +56,11 @@ variable "private_ip_range" {
   type = string
 }
 
+variable storage_product {
+  description = "Block storage product"
+  type = string
+}
+
+variable storage_size {
+  description = "Block storage size in GB"
+}

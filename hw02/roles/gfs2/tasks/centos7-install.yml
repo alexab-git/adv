@@ -1,0 +1,24 @@
+---
+- name: check os version
+  fail: msg='OS is NOT CentOS 7.x'
+  when: ansible_distribution != 'CentOS' or ansible_distribution_major_version != '7'
+
+
+- name: Install packages
+  yum:
+    name: 
+      - pacemaker
+      - pcs
+      - psmisc
+      - policycoreutils-python
+      - lvm2-cluster
+      - gfs2-utils
+
+- name: "Build hosts file"
+  lineinfile: 
+    dest: "/etc/hosts"
+    regexp: '.*{{ item }}$'
+    line: "{{ hostvars[item].ansible_eth1.ipv4.address }} {{ item }}"
+    state: present
+  when: hostvars[item].ansible_eth1.ipv4.address is defined
+  with_items: "{{ groups['all'] }}"
