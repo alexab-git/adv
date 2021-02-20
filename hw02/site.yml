@@ -2,5 +2,8 @@
 - hosts: gfs_nodes
   gather_facts: yes
   become: true
+  vars:
+    storage_interface: 'eth1'
+
   roles:
      - role: gfs2

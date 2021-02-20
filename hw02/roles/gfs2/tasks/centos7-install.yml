@@ -14,7 +14,7 @@
       - lvm2-cluster
       - gfs2-utils
 
-- name: "Build hosts file"
+- name: "Build hosts file for storage network"
   lineinfile: 
     dest: "/etc/hosts"
     regexp: '.*{{ item }}$'
