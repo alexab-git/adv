@@ -3,22 +3,27 @@
   fail: msg='OS is NOT CentOS 7.x'
   when: ansible_distribution != 'CentOS' or ansible_distribution_major_version != '7'
 
-
 - name: Install packages
   yum:
-    name: 
+    name:
       - pacemaker
       - pcs
       - psmisc
       - policycoreutils-python
       - lvm2-cluster
       - gfs2-utils
+      - device-mapper-multipath 
+      - iscsi-initiator-utils
+      - dlm
 
 - name: "Build hosts file for storage network"
-  lineinfile: 
+  lineinfile:
     dest: "/etc/hosts"
     regexp: '.*{{ item }}$'
-    line: "{{ hostvars[item].ansible_eth1.ipv4.address }} {{ item }}"
+    line: "{{ hostvars[item]['ansible_' + storage_interface].ipv4.address }} {{ item }}"
     state: present
-  when: hostvars[item].ansible_eth1.ipv4.address is defined
+  when: hostvars[item]['ansible_' + storage_interface].ipv4.address is defined
   with_items: "{{ groups['all'] }}"
+
+
+

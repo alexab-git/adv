@@ -52,10 +52,3 @@ resource "ah_private_network_connection" "storage" {
   ip_address = "${var.private_ip_range}.100"
 
 }
-
-
-
-  #provision
-  #provisioner "local-exec" {
-  #  command = "ansible-playbook -u '${var.ssh_user}' -i '${self.ips.0.ip_address}', '${var.site_provision}'" 
-  #}

@@ -1,2 +1,15 @@
 ---
 # handlers file for gfs2
+
+- name: restart corosync
+  service:
+    name: "corosync"
+    state: "restarted"
+  become: true
+
+- name: restart pacemaker
+  service:
+    name: "pacemaker"
+    sleep: 10
+    state: "restarted"
+  become: true

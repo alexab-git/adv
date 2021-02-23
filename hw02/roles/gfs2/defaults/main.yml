@@ -1,2 +1,7 @@
 ---
 # defaults file for gfs2
+storage_interface: 'eth1'
+pacemaker_name: 'hacluster'
+pacemaker_user: 'hacluster'
+pacemaker_password: 'hacluster'
+

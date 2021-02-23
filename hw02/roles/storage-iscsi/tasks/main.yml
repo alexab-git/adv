@@ -1,2 +1,4 @@
 ---
 # tasks file for storage-iscsi
+- include: centos7-install.yml
+- include: config.yml

@@ -1,2 +1,34 @@
 ---
 # config file for gfs2
+
+- name: Enable iscsid service
+  systemd:
+    name: iscsid
+    state: started
+    enabled: yes
+
+- name: Enable pcsd service
+  systemd:
+    name: pcsd
+    state: started
+    enabled: yes
+
+- name: Discover iscsi 
+  command: iscsiadm --mode discovery --op update --type sendtargets --portal {{ iscsi_portal_ip }}
+  register: iscsi_discover
+
+- name: Config user for pcs
+  user:
+    name:  "{{ pacemaker_user }}"
+    password: "{{ pacemaker_password | password_hash('sha512') }}"
+  become: true
+
+- name: Generate pcs nodes string for auth
+  set_fact:
+    pcs_nodes: "{{ ansible_play_hosts | join(' ') }}"
+
+- name: pcs auth
+  shell: |
+    pcs cluster auth {{ pcs_nodes }} -u {{ pacemaker_user }} -p  {{ pacemaker_password }}
+    pcs cluster setup --name {{ pacemaker_name }} {{ pcs_nodes }}
+    pcs cluster start --all

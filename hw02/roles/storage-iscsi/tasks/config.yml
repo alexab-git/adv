@@ -1,0 +1,53 @@
+---
+# config file for storage-iscsi
+
+- name: Enable target service
+  systemd:
+    name: target
+    state: started
+    enabled: yes
+
+- name: Check if backstore already exists
+  command: targetcli /backstores/block status
+  register: backstore_status
+
+- name: Disable default portal creation
+  command: targetcli set global auto_add_default_portal=false
+
+- name: Create a new backstore
+  command: targetcli backstores/block create {{ disk_name }} {{ block_device }}
+  register: backstore_create
+
+- name: Create iscsi object
+  command: targetcli iscsi/ create {{ iscsi_object }}.{{ iqn_domain }}.local:{{ disk_name }}
+  when: backstore_create.changed
+  register: iscsi_object_created
+
+- name: Print iscsi object
+  debug:
+    msg: "{{ iscsi_object_created }}"
+  when: iscsi_object_created.changed
+
+- name: Create portal for iscsi object
+  command: targetcli iscsi/{{ iscsi_object }}.{{ iqn_domain }}.local:{{ disk_name }}/tpg1/portals/ create {{ hostvars[inventory_hostname]['ansible_' + storage_interface].ipv4.address }}
+  when: iscsi_object_created.changed
+  register: portal_iscsi_object
+
+- name: Print portal_iscsi_object
+  debug:
+    msg: "{{ portal_iscsi_object }}"
+  when: portal_iscsi_object.changed
+
+- name: Add lun to iscsi object
+  command: targetcli iscsi/{{ iscsi_object }}.{{ iqn_domain }}.local:{{ disk_name }}/tpg1/luns/ create /backstores/block/{{ disk_name }}
+  when: portal_iscsi_object.changed
+  register: lun_to_iscsi_object
+
+- name: Enable acl auto generation
+  command: targetcli iscsi/{{ iscsi_object }}.{{ iqn_domain }}.local:{{ disk_name }}/tpg1/ set attribute generate_node_acls=1
+  register: iscsi_object_created
+
+- name: save targetcli changes
+  command: targetcli saveconfig
+  when: add_acl1.changed
+  register: save_targetcli_config

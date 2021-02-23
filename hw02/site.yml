@@ -1,9 +1,26 @@
 ---
-- hosts: gfs_nodes
+- name: Configure storage-iscsi nodes
+  hosts: storage
   gather_facts: yes
   become: true
-  vars:
-    storage_interface: 'eth1'
-
   roles:
-     - role: gfs2
+    - role: storage-iscsi
+      vars:
+        storage_interface: 'eth1'
+        block_device: '/dev/sdb'
+        iqn_domain: "{{ ansible_hostname }}"
+        iscsi_object: iqn.2021-02
+
+- name: Configure gfs2 nodes
+  hosts: gfs_nodes
+  gather_facts: yes
+  become: true
+  roles:
+    - role: gfs2
+      vars:
+        pacemaker_name: 'hacluster'
+        pacemaker_user: 'hacluster'
+        pacemaker_password: 'hacluster'
+        pacemaker_disable_stonith: true
+        storage_interface: 'eth1'
+        iscsi_portal_ip: "{{ hostvars[groups['storage'][0]]['ansible_' + storage_interface].ipv4.address }}"
