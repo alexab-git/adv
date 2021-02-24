@@ -17,6 +17,10 @@
   command: iscsiadm --mode discovery --op update --type sendtargets --portal {{ iscsi_portal_ip }}
   register: iscsi_discover
 
+- name: Login to iscsi portal
+  command: iscsiadm --mode node --portal {{ iscsi_portal_ip }} --login
+  register: iscsi_discover
+
 - name: Config user for pcs
   user:
     name:  "{{ pacemaker_user }}"
