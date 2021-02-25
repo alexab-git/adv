@@ -7,9 +7,9 @@
     - role: storage-iscsi
       vars:
         storage_interface: 'eth1'
-        block_device: '/dev/sdb'
         iqn_domain: "{{ ansible_hostname }}"
         iscsi_object: iqn.2021-02
+        block_device: '/dev/sdb'
 
 - name: Configure gfs2 nodes
   hosts: gfs_nodes
@@ -21,6 +21,8 @@
         pacemaker_name: 'hacluster'
         pacemaker_user: 'hacluster'
         pacemaker_password: 'hacluster'
-        pacemaker_disable_stonith: true
         storage_interface: 'eth1'
         iscsi_portal_ip: "{{ hostvars[groups['storage'][0]]['ansible_' + storage_interface].ipv4.address }}"
+        cluster_ip: "192.168.0.101"
+        cluster_vg: "cluster_vg"
+        cluster_lv: "cluster_lv"

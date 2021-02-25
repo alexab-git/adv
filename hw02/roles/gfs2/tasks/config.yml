@@ -13,13 +13,19 @@
     state: started
     enabled: yes
 
-- name: Discover iscsi 
+- name: Discover iscsi target
   command: iscsiadm --mode discovery --op update --type sendtargets --portal {{ iscsi_portal_ip }}
   register: iscsi_discover
 
 - name: Login to iscsi portal
   command: iscsiadm --mode node --portal {{ iscsi_portal_ip }} --login
-  register: iscsi_discover
+  when: iscsi_discover.changed
+  register: iscsi_portal_login
+
+- name: Auto startup to iscsi portal
+  command: iscsiadm --mode node --portal {{ iscsi_portal_ip }} -o update -n node.startup -v automatic
+  when: iscsi_portal_login.changed
+
 
 - name: Config user for pcs
   user:
@@ -36,3 +42,59 @@
     pcs cluster auth {{ pcs_nodes }} -u {{ pacemaker_user }} -p  {{ pacemaker_password }}
     pcs cluster setup --name {{ pacemaker_name }} {{ pcs_nodes }}
     pcs cluster start --all
+
+- name: Get iscsi mount point
+  shell: iscsiadm -m session -P 3 | grep 'Attached scsi disk' | awk '{print $4}'
+  register: iscsi_dev
+
+- name: Print iscsi_dev
+  debug:
+    msg: "{{ iscsi_dev.stdout }}"
+  when: iscsi_dev.changed
+
+- name: pcs set iscsi fencing
+  command: pcs stonith create scsi-shooter fence_scsi pcmk_host_list="{{ pcs_nodes }}" devices=/dev/{{ iscsi_dev.stdout }} meta provides=unfencing
+
+
+- name: pcs set no-quorum-policy=freeze
+  command: pcs property set no-quorum-policy=freeze
+
+- name: LVM enable cluster
+  command: lvmconf --enable-cluster
+  when: iscsi_portal_login.changed
+
+- name: Create DLM cluster resource
+  command: pcs resource create dlm ocf:pacemaker:controld op monitor interval=30s clone interleave=true ordered=true
+  register: pcs_dlm
+  failed_when: pcs_dlm.rc > 0 and "already exists" not in pcs_dlm.stderr
+    
+- name: Create CLVMD cluster resource
+  command: pcs resource create clvmd ocf:heartbeat:clvm op monitor interval=30s clone interleave=true ordered=true
+  register: pcs_clmd
+  failed_when: pcs_clmd.rc > 0 and "already exists" not in pcs_clmd.stderr
+
+- name: Set DLM start order
+  command: pcs constraint order start dlm-clone then clvmd-clone
+  register: pcs_dlm_order
+  failed_when: pcs_dlm_order.rc > 0 and "duplicate constraint already exists" not in pcs_dlm_order.stderr
+
+- name: Set CLVMD start order
+  command: pcs constraint colocation add clvmd-clone with dlm-clone
+  register: pcs_clmd_order
+  failed_when: pcs_clmd_order.rc > 0 and "duplicate constraint already exists" not in pcs_clmd_order.stderr
+
+- name: Create a volume group
+  lvg:
+    vg:  "{{ cluster_vg }}"
+    pvs: "'/dev/'{{ iscsi_dev.stdout }}"
+    state: present
+  when: iscsi_dev.changed
+  register: create_vg
+
+- name: Create a logical volume the size of all remaining space in the volume group
+  lvol:
+    vg: "{{ cluster_vg }}"
+    lv: "{{ cluster_lv }}"
+    size: 100%FREE
+  when: create_vg.changed
+  register: create_lv

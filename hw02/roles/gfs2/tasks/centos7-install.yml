@@ -8,6 +8,7 @@
     name:
       - pacemaker
       - pcs
+      - fence-agents-scsi
       - psmisc
       - policycoreutils-python
       - lvm2-cluster

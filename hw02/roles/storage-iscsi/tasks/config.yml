@@ -10,34 +10,26 @@
 - name: Check if backstore already exists
   command: targetcli /backstores/block/{{ disk_name }} status
   register: backstore_status
-  
+  failed_when: backstore_status.rc > 0 and "No such path" not in backstore_status.stderr
+
 - name: Disable default portal creation
   command: targetcli set global auto_add_default_portal=false
 
 - name: Create a new backstore
   command: targetcli backstores/block create {{ disk_name }} {{ block_device }}
+  when: '"No such path" in backstore_status.stderr'
   register: backstore_create
-  when: '"No such path" in backstore_status'
 
 - name: Create iscsi object
   command: targetcli iscsi/ create {{ iscsi_object }}.{{ iqn_domain }}.local:{{ disk_name }}
   when: backstore_create.changed
   register: iscsi_object_created
 
-- name: Print iscsi object
-  debug:
-    msg: "{{ iscsi_object_created }}"
-  when: iscsi_object_created.changed
 
 - name: Create portal for iscsi object
   command: targetcli iscsi/{{ iscsi_object }}.{{ iqn_domain }}.local:{{ disk_name }}/tpg1/portals/ create {{ hostvars[inventory_hostname]['ansible_' + storage_interface].ipv4.address }}
   when: iscsi_object_created.changed
   register: portal_iscsi_object
-
-- name: Print portal_iscsi_object
-  debug:
-    msg: "{{ portal_iscsi_object }}"
-  when: portal_iscsi_object.changed
 
 - name: Add lun to iscsi object
   command: targetcli iscsi/{{ iscsi_object }}.{{ iqn_domain }}.local:{{ disk_name }}/tpg1/luns/ create /backstores/block/{{ disk_name }}
@@ -49,7 +41,8 @@
   register: iscsi_object_created
   when: lun_to_iscsi_object.changed
 
-- name: save targetcli changes
+- name: Save targetcli changes
   command: targetcli saveconfig
   when: lun_to_iscsi_object.changed
   register: save_targetcli_config
+
