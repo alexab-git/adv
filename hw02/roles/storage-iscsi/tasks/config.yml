@@ -12,7 +12,7 @@
   register: backstore_status
   failed_when: backstore_status.rc > 0 and "No such path" not in backstore_status.stderr
 
-- name: Disable default portal creation
+- name: Disable portal creation by default
   command: targetcli set global auto_add_default_portal=false
 
 - name: Create a new backstore
@@ -25,6 +25,17 @@
   when: backstore_create.changed
   register: iscsi_object_created
 
+- name: Set attribute demo_mode_write_protect=0
+  command: targetcli iscsi/{{ iscsi_object }}.{{ iqn_domain }}.local:{{ disk_name }}/tpg1/ set attribute demo_mode_write_protect=0
+  when: iscsi_object_created.changed
+
+- name: Enable acl auto generation
+  command: targetcli iscsi/{{ iscsi_object }}.{{ iqn_domain }}.local:{{ disk_name }}/tpg1/ set attribute authentication=0
+  when: iscsi_object_created.changed
+
+- name: Enable acl auto generation
+  command: targetcli iscsi/{{ iscsi_object }}.{{ iqn_domain }}.local:{{ disk_name }}/tpg1/ set attribute generate_node_acls=1
+  when: iscsi_object_created.changed
 
 - name: Create portal for iscsi object
   command: targetcli iscsi/{{ iscsi_object }}.{{ iqn_domain }}.local:{{ disk_name }}/tpg1/portals/ create {{ hostvars[inventory_hostname]['ansible_' + storage_interface].ipv4.address }}
@@ -36,13 +47,8 @@
   when: portal_iscsi_object.changed
   register: lun_to_iscsi_object
 
-- name: Enable acl auto generation
-  command: targetcli iscsi/{{ iscsi_object }}.{{ iqn_domain }}.local:{{ disk_name }}/tpg1/ set attribute generate_node_acls=1
-  register: iscsi_object_created
-  when: lun_to_iscsi_object.changed
-
 - name: Save targetcli changes
   command: targetcli saveconfig
   when: lun_to_iscsi_object.changed
   register: save_targetcli_config
-
+  

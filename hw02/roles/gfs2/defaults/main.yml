@@ -4,4 +4,5 @@ storage_interface: 'eth1'
 pacemaker_name: 'hacluster'
 pacemaker_user: 'hacluster'
 pacemaker_password: 'hacluster'
-
+pacemaker_fence_iscsi_name: 'scsi-shooter'
+pacemaker_fence_iscsi_op: 'create'

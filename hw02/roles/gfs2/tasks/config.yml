@@ -1,5 +1,10 @@
 ---
 # config file for gfs2
+- name: Disable cloudinit hostname update
+  lineinfile:
+    path: /etc/cloud/cloud.cfg
+    state: absent
+    regexp: '^ - update_etc_hosts'
 
 - name: Enable iscsid service
   systemd:
@@ -26,7 +31,6 @@
   command: iscsiadm --mode node --portal {{ iscsi_portal_ip }} -o update -n node.startup -v automatic
   when: iscsi_portal_login.changed
 
-
 - name: Config user for pcs
   user:
     name:  "{{ pacemaker_user }}"
@@ -52,9 +56,17 @@
     msg: "{{ iscsi_dev.stdout }}"
   when: iscsi_dev.changed
 
-- name: pcs set iscsi fencing
-  command: pcs stonith create scsi-shooter fence_scsi pcmk_host_list="{{ pcs_nodes }}" devices=/dev/{{ iscsi_dev.stdout }} meta provides=unfencing
+- name: pcs check iscsi fencing {{ pacemaker_fence_iscsi_name }}
+  command: pcs stonith show {{ pacemaker_fence_iscsi_name }}
+  register: pacemaker_fence_iscsi
 
+- name: Set op to 'update' if {{ pacemaker_fence_iscsi_name }} exist
+  set_fact:
+    pacemaker_fence_iscsi_op: 'update'
+  when: 'pacemaker_fence_iscsi_name in pacemaker_fence_iscsi.stdout'
+
+- name: pcs set iscsi fencing
+  command: pcs stonith {{pacemaker_fence_iscsi_op}} {{ pacemaker_fence_iscsi_name }} fence_scsi pcmk_host_list="{{ pcs_nodes }}" devices=/dev/{{ iscsi_dev.stdout }} meta provides=unfencing
 
 - name: pcs set no-quorum-policy=freeze
   command: pcs property set no-quorum-policy=freeze
@@ -86,7 +98,8 @@
 - name: Create a volume group
   lvg:
     vg:  "{{ cluster_vg }}"
-    pvs: "'/dev/'{{ iscsi_dev.stdout }}"
+    pvs: "{{'/dev/' + iscsi_dev.stdout }}"
+    vg_options: "-Ay -cy --shared"
     state: present
   when: iscsi_dev.changed
   register: create_vg
@@ -98,3 +111,19 @@
     size: 100%FREE
   when: create_vg.changed
   register: create_lv
+
+- name: Check if gfs2 filesystem exists
+  command: tunegfs2 -l /dev/{{ cluster_vg }}/{{ cluster_lv }}
+  register: gfs2_status
+
+- name: Create a gfs2 filesystem
+  command: mkfs.gfs2 -p lock_dlm -t {{ pacemaker_name }}:gfs2 -j {{ ansible_play_hosts | length }}  /dev/{{ cluster_vg }}/{{ cluster_lv }} -O
+  when: '"File system volume name: " + pacemaker_name not in gfs2_status.stdout'
+
+- name: Mount file system
+  mount:
+    path: "{{ mount_to }}"
+    src: "{{ '/dev/' + cluster_vg +'/' + cluster_lv }}"
+    fstype: gfs2
+    opts: noatime
+    state: present
