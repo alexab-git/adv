@@ -18,6 +18,11 @@
     state: started
     enabled: yes
 
+- name: Enable corosync service
+  systemd:
+    name: corosync
+    enabled: yes
+
 - name: Discover iscsi target
   command: iscsiadm --mode discovery --op update --type sendtargets --portal {{ iscsi_portal_ip }}
   register: iscsi_discover
@@ -59,21 +64,31 @@
 - name: pcs check iscsi fencing {{ pacemaker_fence_iscsi_name }}
   command: pcs stonith show {{ pacemaker_fence_iscsi_name }}
   register: pacemaker_fence_iscsi
+  failed_when: pacemaker_fence_iscsi.rc > 0 and "unable to find resource" not in pacemaker_fence_iscsi.stderr
 
-- name: Set op to 'update' if {{ pacemaker_fence_iscsi_name }} exist
+- name: Set variable to skip fence_iscsi config if {{ pacemaker_fence_iscsi_name }} exist
   set_fact:
-    pacemaker_fence_iscsi_op: 'update'
+    pacemaker_fence_iscsi_op: 'skip'
   when: 'pacemaker_fence_iscsi_name in pacemaker_fence_iscsi.stdout'
 
 - name: pcs set iscsi fencing
   command: pcs stonith {{pacemaker_fence_iscsi_op}} {{ pacemaker_fence_iscsi_name }} fence_scsi pcmk_host_list="{{ pcs_nodes }}" devices=/dev/{{ iscsi_dev.stdout }} meta provides=unfencing
+  when: pacemaker_fence_iscsi_op != 'skip'
 
 - name: pcs set no-quorum-policy=freeze
   command: pcs property set no-quorum-policy=freeze
+  when: pacemaker_fence_iscsi_op != 'skip'
 
 - name: LVM enable cluster
   command: lvmconf --enable-cluster
   when: iscsi_portal_login.changed
+
+- name: Disable and stop lvm2-lvmetad
+  systemd:
+    name: lvm2-lvmetad
+    state: stopped
+    enabled: no
+    force: yes
 
 - name: Create DLM cluster resource
   command: pcs resource create dlm ocf:pacemaker:controld op monitor interval=30s clone interleave=true ordered=true
@@ -115,15 +130,33 @@
 - name: Check if gfs2 filesystem exists
   command: tunegfs2 -l /dev/{{ cluster_vg }}/{{ cluster_lv }}
   register: gfs2_status
-
+  failed_when: gfs2_status.rc > 0 and "Device does not contain a GFS or GFS2" not in gfs2_status.stderr
+  
 - name: Create a gfs2 filesystem
   command: mkfs.gfs2 -p lock_dlm -t {{ pacemaker_name }}:gfs2 -j {{ ansible_play_hosts | length }}  /dev/{{ cluster_vg }}/{{ cluster_lv }} -O
   when: '"File system volume name: " + pacemaker_name not in gfs2_status.stdout'
 
-- name: Mount file system
-  mount:
-    path: "{{ mount_to }}"
-    src: "{{ '/dev/' + cluster_vg +'/' + cluster_lv }}"
-    fstype: gfs2
-    opts: noatime
-    state: present
+#- name: Mount file system
+# mount:
+#   path: "{{ mount_to }}"
+#   src: "{{ '/dev/' + cluster_vg +'/' + cluster_lv }}"
+#   fstype: gfs2
+#   opts: noatime
+#   state: present
+# register: mount_status
+
+- name: Check if pcs resource gfs2 exists
+  command: pcs resource show gfs2fs
+  register: pcs_gfs2_status
+  failed_when: pcs_gfs2_status.rc > 0 and "already exists" not in pcs_gfs2_status.stderr
+
+- name: Create gfs2fs pcs resource
+  command: pcs resource create gfs2fs Filesystem device=/dev/{{ cluster_vg }}/{{ cluster_lv }} directory={{ mount_to}} fstype=gfs2 options=noatime op monitor interval=10s on-fail=fence clone interleave=true
+  register: pcs_gfs2_created
+  when: '"/dev/" + cluster_vg + "/" + cluster_lv not in pcs_gfs2_status.stdout'
+
+- name: Set CLVMD start order
+  shell: |
+    pcs constraint order start clvmd-clone then gfs2fs-clone
+    pcs constraint colocation add gfs2fs-clone with clvmd-clone
+  when: pcs_gfs2_created.changed
