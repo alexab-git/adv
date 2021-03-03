@@ -1,0 +1,18 @@
+---
+# gfs2 test
+- hosts: all
+  vars:
+    mount_to: '/mnt'
+    date: "{{ lookup('pipe', 'date +%Y%m%d-%H%M') }}"
+  gather_facts: yes
+  become: yes
+  tasks:
+    - name: create files
+      file:
+        path: "{{ mount_to }}/test-{{ date }}"
+        state: touch
+    - name: list
+      command: ls -la {{ mount_to }}
+      register: result
+    - debug: msg="{{ result.stdout_lines }}"
+

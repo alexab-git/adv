@@ -1,0 +1,17 @@
+---
+# pcs status
+- hosts: all
+  gather_facts: yes
+  become: yes
+  
+  tasks:
+  - name: pcs show status
+    command: pcs status
+    register: pcs_status
+  - debug: msg="{{ pcs_status.stdout_lines }}"
+
+  - name: pcs stonith show
+    command: pcs stonith show --full
+    register: pcs_stonith
+  - debug: msg="{{ pcs_stonith.stdout_lines }}"
+

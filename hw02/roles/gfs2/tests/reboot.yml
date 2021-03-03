@@ -1,0 +1,8 @@
+---
+# gfs2 test
+- hosts: all
+  become: yes
+  tasks:
+    - name: list
+      reboot:
+
