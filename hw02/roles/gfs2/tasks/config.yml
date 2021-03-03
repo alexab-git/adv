@@ -23,6 +23,13 @@
     name: corosync
     enabled: yes
 
+- name: Disable and stop lvm2-lvmetad
+  systemd:
+    name: lvm2-lvmetad
+    state: stopped
+    enabled: no
+    force: yes
+
 - name: Discover iscsi target
   command: iscsiadm --mode discovery --op update --type sendtargets --portal {{ iscsi_portal_ip }}
   register: iscsi_discover
@@ -69,31 +76,28 @@
 - name: Set variable to skip fence_iscsi config if {{ pacemaker_fence_iscsi_name }} exist
   set_fact:
     pacemaker_fence_iscsi_op: 'skip'
-  when: 'pacemaker_fence_iscsi_name in pacemaker_fence_iscsi.stdout'
+  when: "pacemaker_fence_iscsi_name in pacemaker_fence_iscsi.stdout"
+  run_once: true
 
 - name: pcs set iscsi fencing
   command: pcs stonith {{pacemaker_fence_iscsi_op}} {{ pacemaker_fence_iscsi_name }} fence_scsi pcmk_host_list="{{ pcs_nodes }}" devices=/dev/{{ iscsi_dev.stdout }} meta provides=unfencing
   when: pacemaker_fence_iscsi_op != 'skip'
+  run_once: true
 
 - name: pcs set no-quorum-policy=freeze
   command: pcs property set no-quorum-policy=freeze
-  when: pacemaker_fence_iscsi_op != 'skip'
 
-- name: LVM enable cluster
+- name: LVM cluster enable
   command: lvmconf --enable-cluster
   when: iscsi_portal_login.changed
-
-- name: Disable and stop lvm2-lvmetad
-  systemd:
-    name: lvm2-lvmetad
-    state: stopped
-    enabled: no
-    force: yes
 
 - name: Create DLM cluster resource
   command: pcs resource create dlm ocf:pacemaker:controld op monitor interval=30s clone interleave=true ordered=true
   register: pcs_dlm
-  failed_when: pcs_dlm.rc > 0 and "already exists" not in pcs_dlm.stderr
+  failed_when: 
+    - pcs_dlm.rc > 0
+    - '"already exists" not in pcs_dlm.stderr'
+    - '"Unable to update" not in pcs_dlm.stderr'
     
 - name: Create CLVMD cluster resource
   command: pcs resource create clvmd ocf:heartbeat:clvm op monitor interval=30s clone interleave=true ordered=true
@@ -103,12 +107,16 @@
 - name: Set DLM start order
   command: pcs constraint order start dlm-clone then clvmd-clone
   register: pcs_dlm_order
-  failed_when: pcs_dlm_order.rc > 0 and "duplicate constraint already exists" not in pcs_dlm_order.stderr
+  failed_when:
+    - pcs_dlm_order.rc > 0
+    - '"duplicate constraint already exists" not in pcs_dlm_order.stderr'
 
 - name: Set CLVMD start order
   command: pcs constraint colocation add clvmd-clone with dlm-clone
   register: pcs_clmd_order
-  failed_when: pcs_clmd_order.rc > 0 and "duplicate constraint already exists" not in pcs_clmd_order.stderr
+  failed_when: 
+    - pcs_clmd_order.rc > 0 
+    - '"duplicate constraint already exists" not in pcs_clmd_order.stderr'
 
 - name: Create a volume group
   lvg:
@@ -118,6 +126,7 @@
     state: present
   when: iscsi_dev.changed
   register: create_vg
+  run_once: true
 
 - name: Create a logical volume the size of all remaining space in the volume group
   lvol:
@@ -126,6 +135,10 @@
     size: 100%FREE
   when: create_vg.changed
   register: create_lv
+  run_once: true
+
+- name: Rescan LVM volume
+  command: lvs
 
 - name: Check if gfs2 filesystem exists
   command: tunegfs2 -l /dev/{{ cluster_vg }}/{{ cluster_lv }}
@@ -135,6 +148,7 @@
 - name: Create a gfs2 filesystem
   command: mkfs.gfs2 -p lock_dlm -t {{ pacemaker_name }}:gfs2 -j {{ ansible_play_hosts | length }}  /dev/{{ cluster_vg }}/{{ cluster_lv }} -O
   when: '"File system volume name: " + pacemaker_name not in gfs2_status.stdout'
+  run_once: true
 
 #- name: Mount file system
 # mount:
@@ -148,15 +162,27 @@
 - name: Check if pcs resource gfs2 exists
   command: pcs resource show gfs2fs
   register: pcs_gfs2_status
-  failed_when: pcs_gfs2_status.rc > 0 and "already exists" not in pcs_gfs2_status.stderr
+  failed_when: 
+    - pcs_gfs2_status.rc > 0 
+    - '"already exists" not in pcs_gfs2_status.stderr'
+    - '"unable to find resource" not in pcs_gfs2_status.stderr'
+
 
 - name: Create gfs2fs pcs resource
   command: pcs resource create gfs2fs Filesystem device=/dev/{{ cluster_vg }}/{{ cluster_lv }} directory={{ mount_to}} fstype=gfs2 options=noatime op monitor interval=10s on-fail=fence clone interleave=true
   register: pcs_gfs2_created
-  when: '"/dev/" + cluster_vg + "/" + cluster_lv not in pcs_gfs2_status.stdout'
+  when: "'class=ocf provider=heartbeat type=Filesystem' not in pcs_gfs2_status.stdout"
+  run_once: true
+
 
 - name: Set CLVMD start order
   shell: |
     pcs constraint order start clvmd-clone then gfs2fs-clone
     pcs constraint colocation add gfs2fs-clone with clvmd-clone
+  register: clvmd_order
   when: pcs_gfs2_created.changed
+  failed_when: 
+    - clvmd_order.rc > 0 
+    - '"already exists" not in clvmd_order.stderr'
+  run_once: true
+

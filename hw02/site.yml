@@ -23,7 +23,6 @@
         pacemaker_password: 'hacluster'
         storage_interface: 'eth1'
         iscsi_portal_ip: "{{ hostvars[groups['storage'][0]]['ansible_' + storage_interface].ipv4.address }}"
-        cluster_ip: "192.168.0.101"
         cluster_vg: "cluster_vg"
         #cluster_vg: "clvm_vg"
         cluster_lv: "cluster_lv"
