@@ -1,9 +1,0 @@
-ah_dc = "ams1"
-ah_image = "centos-7-x64"
-ah_product = "start-xs"
-ah_token = "!!!!super_secret"
-ah_ssh_keys = ["!!!super_keys"]
-ssh_user = "adminroot"
-inventory_file = "hosts"
-web_provision_yml = "web.yml"
-node_count = "2"
