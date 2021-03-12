@@ -1,4 +1,4 @@
-# Peacemaker cluster, iscsi, gfs
+# Pacemaker cluster, iscsi, gfs
 
 Развертывание инфраструктуры на advacedHosting при помощи Terraform.
 Создание кластиера при помощи ansible.
