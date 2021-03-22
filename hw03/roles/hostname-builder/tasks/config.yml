@@ -1,0 +1,7 @@
+---
+- name: Disable cloudinit hostname update
+  lineinfile:
+    path: /etc/cloud/cloud.cfg
+    state: absent
+    regexp: '^ - update_etc_hosts'
+

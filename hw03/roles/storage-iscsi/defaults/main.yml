@@ -1,0 +1,7 @@
+---
+# defaults file for storage-iscsi
+iscsi_lun: 0
+iscsi_object: iqn.2021-02
+iqn_domain: cluster
+disk_name: disk0
+portal_port: 3260

@@ -1,0 +1,4 @@
+---
+# tasks file for ngoinx-phpfpm
+- include: centos8-install.yml
+- include: config.yml

@@ -1,0 +1,9 @@
+---
+- name: "Build hosts file for interface {{interface}}"
+  lineinfile:
+    dest: "/etc/hosts"
+    regexp: '.*{{ item }}$'
+    line: "{{ hostvars[item]['ansible_' + interface].ipv4.address }} {{ item }}"
+    state: present
+  when: hostvars[item]['ansible_' + interface].ipv4.address is defined
+  with_items: "{{ groups['all'] }}"
