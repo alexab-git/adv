@@ -1,2 +1,18 @@
 ---
 #
+
+# Disable SELinux
+- selinux:
+    state: disabled
+
+- name: Enable nginx service
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Enable php-fpm service
+  systemd:
+    name: php-fpm
+    state: started
+    enabled: yes    
