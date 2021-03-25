@@ -27,8 +27,12 @@
 #        cluster_lv: "cluster_lv"
 #        mount_to: "/mnt"
 #
+- hosts: localhost
+  tasks:
+    - set_fact: 
+        web_net_iface: 'eth1'
 
-- name: Configure host names
+- name: Configure nginx nodes
   hosts: nginx_nodes
   gather_facts: yes
   become: true
@@ -36,15 +40,11 @@
     - role: hostname-builder
       vars:
         interface: 'eth1'
-
-- name: Configure nginx nodes
-  hosts: nginx_nodes
-  gather_facts: yes
-  become: true
-  roles:
     - role: nginx-phpfpm
+      vars:
+        nginx_bind_port: 8080
+
+        
     #- role: sedovandrew.nginx
     #nginx_http_default_server_port: 8080
     #- role: nginxinc.nginx_config
-
-

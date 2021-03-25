@@ -1,9 +1,14 @@
 ---
 #
-
 # Disable SELinux
 - selinux:
     state: disabled
+
+- name: Deploy NGINX config from template
+  template:
+    src: nginx.conf.j2
+    dest: "{{ nginx_conf_file }}"
+    mode: 0755
 
 - name: Enable nginx service
   systemd:
@@ -15,4 +20,4 @@
   systemd:
     name: php-fpm
     state: started
-    enabled: yes    
+    enabled: yes
