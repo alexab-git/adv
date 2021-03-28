@@ -1,9 +1,12 @@
 ---
 # defaults file for nginx-phpfpm
 nginx_bind_port: 80
-nginx_bind_ip: "0.0.0.0"
+nginx_bind_iface: "eth0"
 nginx_conf_file: "/etc/nginx/nginx.conf"
 
+fpm_conf_file: "/etc/php-fpm.conf"
 fpm_proto: "unix"
 fpm_socket: "/run/php-fpm/www.sock"
-fpm_ip: ""
+fpm_pools_conf_path: "/etc/php-fpm.d/"
+fpm_deploy_default_pool: false
+fpm_default_pool_name: "www"

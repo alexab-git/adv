@@ -1,0 +1,3 @@
+---
+# group variables
+web_net_iface: 'eth1'

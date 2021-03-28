@@ -28,7 +28,7 @@ http {
     include /etc/nginx/conf.d/*.conf;
 
     server {
-        listen       {{ nginx_bind_ip }}:{{ nginx_bind_port }} default_server;
+        listen       {{ hostvars[inventory_hostname]['ansible_' + nginx_bind_iface].ipv4.address }}:{{ nginx_bind_port }} default_server;
         server_name  _;
         root         /usr/share/nginx/html;
 

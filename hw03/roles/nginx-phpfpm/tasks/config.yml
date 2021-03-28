@@ -10,6 +10,24 @@
     dest: "{{ nginx_conf_file }}"
     mode: 0755
 
+- name: Deploy php-fpm config from template
+  template:
+    src: php-fpm.conf.j2
+    dest: "{{ fpm_conf_file }}"
+    mode: 0755
+
+- name: Deploy php-fpm config from template
+  template:
+    src: php-fpm.conf.j2
+    dest: "{{ fpm_conf_file }}"
+    mode: 0755
+
+- name: Deploy default php-fpm pool from template
+  template:
+    src: "{{ fpm_default_pool_name + '.conf.j2' }}"
+    dest: "{{ fpm_pools_conf_path +':' + fpm_default_pool_name + '.conf'}}"
+    mode: 0755
+
 - name: Enable nginx service
   systemd:
     name: nginx
