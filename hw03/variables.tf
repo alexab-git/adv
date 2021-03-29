@@ -54,8 +54,8 @@ variable "db_private_ip_range" {
   type = string
 }
 
-variable "client_private_ip_range" {
-  description = "Private client network number for ip generation"
+variable "web_private_ip_range" {
+  description = "Private web network number for ip generation"
   type = string
 }
 

@@ -1,3 +1,4 @@
 ---
 # group variables
-web_net_iface: 'eth1'
+db_net_iface: 'eth1'
+web_net_iface: 'eth2'

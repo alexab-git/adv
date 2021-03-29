@@ -12,3 +12,9 @@ db:
       ${name}:
             ansible_host: ${db-ip[index]}
     %{ endfor ~}
+client_nodes:
+      hosts:
+    %{ for index, name in client-nodes-name ~}
+      ${name}:
+            ansible_host: ${client-nodes-ip[index]}
+    %{ endfor ~}    

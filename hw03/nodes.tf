@@ -29,9 +29,9 @@ resource "ah_private_network" "dbnet" {
   name = "Database network"
 }
 
-resource "ah_private_network" "client-net" {
-  ip_range = "${var.client_private_ip_range}.0/24"
-  name = "Client network"
+resource "ah_private_network" "webnet" {
+  ip_range = "${var.web_private_ip_range}.0/24"
+  name = "Web network"
 }
 
 resource "ah_private_network_connection" "nginx-nodes-dbnet" {
@@ -49,10 +49,18 @@ resource "ah_private_network_connection" "db-nodes-dbnet" {
   ip_address = "${var.db_private_ip_range}.100"
 }
 
-resource "ah_private_network_connection" "client-nodes-client-net" {
-  depends_on = [ ah_private_network.client-net, ah_cloud_server.client-node ]
+resource "ah_private_network_connection" "nginx-nodes-webnet" {
+  depends_on = [ ah_private_network.webnet, ah_private_network.dbnet, ah_cloud_server.nginx-node ]
+  count      = var.nginx_node_count
+  cloud_server_id =  ah_cloud_server.nginx-node[count.index].id
+  private_network_id = ah_private_network.webnet.id
+  ip_address = "${var.web_private_ip_range}.${count.index+200}"
+}
+
+resource "ah_private_network_connection" "client-nodes-webnet" {
+  depends_on = [ ah_private_network.webnet, ah_private_network.dbnet, ah_cloud_server.client-node ]
   count      = var.client_node_count
   cloud_server_id =  ah_cloud_server.client-node[count.index].id
-  private_network_id = ah_private_network.client-net.id
-  ip_address = "${var.client_private_ip_range}.${count.index+10}"
+  private_network_id = ah_private_network.webnet.id
+  ip_address = "${var.web_private_ip_range}.${count.index+10}"
 }
