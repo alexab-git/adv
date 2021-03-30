@@ -2,12 +2,23 @@
 - name: Configure db node
   hosts: db
   gather_facts: yes
+  become: true
   roles:
     - role: geerlingguy.mysql
       vars:
-        mysql_enabled_on_startup: true
         mysql_bind_address: "{{hostvars[inventory_hostname]['ansible_' + db_net_iface].ipv4.address }}"
-        
+        mysql_enabled_on_startup: true
+        mysql_root_password_update: true
+        mysql_user_password_update: true
+        mysql_skip_name_resolve: true
+        mysql_databases:
+          - name: "{{ wp_db }}"
+        mysql_users:
+          - name: "{{ wp_user }}"
+            host: "%"
+            password: similarly-secure-password
+            priv: "{{ wp_db + '.*:ALL'}}"
+
 - name: Configure nginx nodes
   hosts: nginx_nodes
   gather_facts: yes
