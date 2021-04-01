@@ -1,0 +1,43 @@
+---
+#
+# Disable SELinux
+- selinux:
+    state: disabled
+
+- name: Deploy NGINX config from template
+  template:
+    src: nginx.conf.j2
+    dest: "{{ nginx_conf_file }}"
+    mode: 0755
+
+- name: Deploy php-fpm config from template
+  template:
+    src: php-fpm.conf.j2
+    dest: "{{ fpm_conf_file }}"
+    mode: 0755
+
+- name: Deploy default php-fpm pool from template
+  template:
+    src: "{{ fpm_default_pool_name + '.conf.j2' }}"
+    dest: "{{ fpm_pools_conf_path +':' + fpm_default_pool_name + '.conf'}}"
+    mode: 0755
+  when: (fpm_deploy_default_pool|default(false)|bool == true)
+
+- name: Remove default pool if not needed
+  file:
+    path: "{{ fpm_pools_conf_path +':' + fpm_default_pool_name + '.conf'}}"
+    state: absent
+  when: (fpm_deploy_default_pool|default(false)|bool == false)
+
+- name: Enable NGINX service
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Enable php-fpm service
+  systemd:
+    name: php-fpm
+    state: started
+    enabled: yes
+  when: (fpm_deploy_default_pool|default(false)|bool == true)

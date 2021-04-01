@@ -1,4 +1,11 @@
 ---
+- name: Configure nginx nodes
+  hosts: nginx_nodes, db
+  roles:
+    - role: hostname-builder
+      vars:
+        interface: "{{ db_net_iface }}"
+
 - name: Configure db node
   hosts: db
   gather_facts: yes
@@ -16,7 +23,7 @@
         mysql_users:
           - name: "{{ wp_user }}"
             host: "%"
-            password: similarly-secure-password
+            password: "{{ wp_password }}"
             priv: "{{ wp_db + '.*:ALL'}}"
 
 - name: Configure nginx nodes
@@ -24,9 +31,6 @@
   gather_facts: yes
   become: true
   roles:
-    - role: hostname-builder
-      vars:
-        interface: "{{ web_net_iface }}"
     - role: nginx-phpfpm
       vars:
         nginx_bind_port: 8080

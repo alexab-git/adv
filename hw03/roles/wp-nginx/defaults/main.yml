@@ -1,0 +1,9 @@
+---
+# defaults file for wp-nginx
+
+fpm_proto: "unix"
+fpm_socket: "/run/php-fpm/www.sock"
+fpm_pools_conf_path: "/etc/php-fpm.d/"
+wp_fpm_pool_name: "wp"
+wp_fpm_pool_user: "nginx"
+wp_fpm_pool_group: "nginx"
