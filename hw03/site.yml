@@ -1,6 +1,7 @@
 ---
 - name: Configure nginx nodes
-  hosts: nginx_nodes, db
+  become: true
+  hosts: nginx_nodes
   roles:
     - role: hostname-builder
       vars:
@@ -35,3 +36,10 @@
       vars:
         nginx_bind_port: 8080
         nginx_bind_iface: "{{ web_net_iface }}"
+
+- name: Configure wp nodes
+  hosts: nginx_nodes
+  gather_facts: yes
+  become: true
+  roles:
+    - role: wp-nginx

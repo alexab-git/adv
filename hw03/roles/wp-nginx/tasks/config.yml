@@ -4,40 +4,33 @@
 - selinux:
     state: disabled
 
+- name: Download wp
+  get_url:
+    url: "https://wordpress.org/{{ wp_version }}.tar.gz"
+    dest: "/tmp/{{ wp_version }}.tar.gz"
+    force: no
+
+- name: Ensure {{ nginx_html_root_dir }}/{{ wp_dir_prefix }}-{{ wp_version }} directory exists
+  file:
+    path: "{{ nginx_html_root_dir }}/{{ wp_dir_prefix }}-{{ wp_version }}"
+    state: directory
+
+- name: Unarchive wp
+  unarchive:
+    src: "/tmp/{{ wp_version }}.tar.gz"
+    dest: "{{ nginx_html_root_dir }}/{{ wp_dir_prefix }}-{{ wp_version }}"
+    remote_src: yes
+    extra_opts: [--strip-components=1]
+
 - name: Deploy NGINX config from template
   template:
-    src: nginx.conf.j2
-    dest: "{{ nginx_conf_file }}"
+    src: "{{ wp_nginx_conf + '.conf.j2' }}"
+    dest: "{{ nginx_conf_dir + wp_nginx_conf + '.conf'}}"
     mode: 0755
 
-- name: Deploy php-fpm config from template
+- name: Deploy wp php-fpm pool from template
   template:
-    src: php-fpm.conf.j2
-    dest: "{{ fpm_conf_file }}"
+    src: "{{ wp_fpm_pool_name + '.conf.j2' }}"
+    dest: "{{ fpm_pools_conf_path + wp_fpm_pool_name + '.conf'}}"
     mode: 0755
 
-- name: Deploy default php-fpm pool from template
-  template:
-    src: "{{ fpm_default_pool_name + '.conf.j2' }}"
-    dest: "{{ fpm_pools_conf_path +':' + fpm_default_pool_name + '.conf'}}"
-    mode: 0755
-  when: (fpm_deploy_default_pool|default(false)|bool == true)
-
-- name: Remove default pool if not needed
-  file:
-    path: "{{ fpm_pools_conf_path +':' + fpm_default_pool_name + '.conf'}}"
-    state: absent
-  when: (fpm_deploy_default_pool|default(false)|bool == false)
-
-- name: Enable NGINX service
-  systemd:
-    name: nginx
-    state: started
-    enabled: yes
-
-- name: Enable php-fpm service
-  systemd:
-    name: php-fpm
-    state: started
-    enabled: yes
-  when: (fpm_deploy_default_pool|default(false)|bool == true)
