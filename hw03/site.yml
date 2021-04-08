@@ -1,7 +1,7 @@
 ---
-- name: Configure nginx nodes
+- name: Configure hostnames for nginx_nodes
   become: true
-  hosts: nginx_nodes
+  hosts: nginx_nodes, db
   roles:
     - role: hostname-builder
       vars:

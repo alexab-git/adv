@@ -1,3 +1,4 @@
 ---
 # defaults file
 interface: 'eth1'
+add_hostname_filter: ""

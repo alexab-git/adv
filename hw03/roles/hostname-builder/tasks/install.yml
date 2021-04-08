@@ -5,5 +5,5 @@
     regexp: '.*{{ item }}$'
     line: "{{ hostvars[item]['ansible_' + interface].ipv4.address }} {{ item }}"
     state: present
-  when: hostvars[item]['ansible_' + interface].ipv4.address is defined
+  when: hostvars[item]['ansible_' + interface].ipv4.address is defined and hostvars[item]['ansible_facts']['hostname'] not in add_hostname_filter
   with_items: "{{ groups['all'] }}"
