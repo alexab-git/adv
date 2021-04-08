@@ -14,17 +14,17 @@
   roles:
     - role: geerlingguy.mysql
       vars:
-        mysql_bind_address: "{{hostvars[inventory_hostname]['ansible_' + db_net_iface].ipv4.address }}"
+        #mysql_bind_address: "{{hostvars[inventory_hostname]['ansible_' + db_net_iface].ipv4.address }}, 127.0.0.1"
         mysql_enabled_on_startup: true
         mysql_root_password_update: true
         mysql_user_password_update: true
-        mysql_skip_name_resolve: true
+        mysql_skip_name_resolve: false
         mysql_databases:
           - name: "{{ wp_db }}"
         mysql_users:
           - name: "{{ wp_user }}"
             host: "%"
-            password: "{{ wp_password }}"
+            password: "{{ wp_pass }}"
             priv: "{{ wp_db + '.*:ALL'}}"
 
 - name: Configure nginx nodes
@@ -43,3 +43,5 @@
   become: true
   roles:
     - role: wp-nginx
+      vars:
+        wp_db_host: "{{ hostvars[groups['db'][0]]['ansible_' + db_net_iface].ipv4.address }}"

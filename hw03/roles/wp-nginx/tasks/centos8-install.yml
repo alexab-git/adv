@@ -17,3 +17,4 @@
       - php-gd 
       - php-xml 
       - php-mbstring
+      - php-json

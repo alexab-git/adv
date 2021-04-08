@@ -2,7 +2,7 @@ server {
    listen 80;
 
    # note that these lines are originally from the "location /" block
-   root {{ nginx_html_root_dir }}-{{ wp_dir_prefix }}-{{wp_version}};
+   root {{ nginx_html_root_dir }}{{ wp_dir_prefix }}-{{wp_version}};
    index index.php index.html index.htm;
 
    location / {

@@ -34,3 +34,12 @@
     dest: "{{ fpm_pools_conf_path + wp_fpm_pool_name + '.conf'}}"
     mode: 0755
 
+- name: Fetch random salts for WordPress config
+  local_action: command curl https://api.wordpress.org/secret-key/1.1/salt/
+  register: "wp_salt"
+
+- name: Deploy wp config from template
+  template:
+    src: "{{ wp_conf + '.j2' }}"
+    dest: "{{ nginx_html_root_dir }}/{{ wp_dir_prefix }}-{{ wp_version }}"
+    mode: 0755
