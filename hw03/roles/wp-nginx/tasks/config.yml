@@ -35,8 +35,11 @@
     mode: 0755
 
 - name: Fetch random salts for WordPress config
-  local_action: command curl https://api.wordpress.org/secret-key/1.1/salt/
-  register: "wp_salt"
+  shell: curl -s https://api.wordpress.org/secret-key/1.1/salt/
+  register: shell_output
+
+- set_fact:
+    wp_salt : "{{ shell_output.stdout }}"
 
 - name: Deploy wp config from template
   template:

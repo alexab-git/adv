@@ -36,12 +36,6 @@
       vars:
         nginx_bind_port: 8080
         nginx_bind_iface: "{{ web_net_iface }}"
-
-- name: Configure wp nodes
-  hosts: nginx_nodes
-  gather_facts: yes
-  become: true
-  roles:
     - role: wp-nginx
       vars:
         wp_db_host: "{{ hostvars[groups['db'][0]]['ansible_' + db_net_iface].ipv4.address }}"
