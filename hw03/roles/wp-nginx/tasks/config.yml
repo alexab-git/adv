@@ -44,5 +44,5 @@
 - name: Deploy wp config from template
   template:
     src: "{{ wp_conf + '.j2' }}"
-    dest: "{{ nginx_html_root_dir }}/{{ wp_dir_prefix }}-{{ wp_version }}"
+    dest: "{{ nginx_html_root_dir }}/{{ wp_dir_prefix }}-{{ wp_version }}/{{ wp_conf }}"
     mode: 0755
