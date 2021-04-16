@@ -10,10 +10,20 @@ nginx_html_root_dir: "/var/www/"
 wp_nginx_conf: "wp-nginx"
 wp_conf: "wp-config.php"
 
-wp_dir_prefix: 'wp'
-wp_version: "latest"
-wp_db_host: "localhost"
 wp_nginx_port: "80"
 wp_fpm_pool_name: "wp"
 wp_fpm_pool_user: "nginx"
 wp_fpm_pool_group: "nginx"
+
+
+wp_dir_prefix: 'wp'
+wp_version: "latest"
+wp_db_host: "localhost"
+wp_db_name: "wp"
+wp_db_user: "user"
+wp_db_password: ""
+wp_admin: "admin"
+wp_admin_password: ""
+wp_admin_email: "admin@localhost.local"
+wp_title: "WP"
+wp_url: "localhost"

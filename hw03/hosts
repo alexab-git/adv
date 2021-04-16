@@ -1,0 +1,17 @@
+all:
+  children:
+    nginx_nodes:
+      hosts:
+          nginx-node-0:
+            ansible_host: 185.189.68.107
+          nginx-node-1:
+            ansible_host: 185.189.68.127
+    db:
+      hosts:
+          db-node:
+            ansible_host: 185.189.68.131
+    client_nodes:
+      hosts:
+          client-node-0:
+            ansible_host: 185.189.68.154
+    
