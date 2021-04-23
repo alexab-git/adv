@@ -42,4 +42,5 @@
         wp_db_name: "{{ wp_db }}"
         wp_db_user: "{{ wp_user }}"
         wp_db_password: "{{ wp_pass }}"
+        wp_admin_password: "u#ie3yufF3"
         wp_url: "{{ hostvars[inventory_hostname]['ansible_' + web_net_iface].ipv4.address }}"

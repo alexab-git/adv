@@ -2,6 +2,7 @@
 # group variables
 db_net_iface: 'eth1'
 web_net_iface: 'eth2'
+client_web_net_iface: 'eth1'
 
 wp_user: "wp_user"
 wp_db: "wp_db"

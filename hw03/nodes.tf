@@ -27,11 +27,13 @@ resource "ah_cloud_server" "client-node" {
 resource "ah_private_network" "dbnet" {
   ip_range = "${var.db_private_ip_range}.0/24"
   name = "Database network"
+
 }
 
 resource "ah_private_network" "webnet" {
   ip_range = "${var.web_private_ip_range}.0/24"
   name = "Web network"
+  depends_on =  [ah_private_network.dbnet]
 }
 
 resource "ah_private_network_connection" "nginx-nodes-dbnet" {
