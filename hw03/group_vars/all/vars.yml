@@ -1,8 +1,13 @@
 ---
 # group variables
-db_net_iface: 'eth1'
-web_net_iface: 'eth2'
-client_web_net_iface: 'eth1'
+db_dbnet_iface: 'eth1'
+nginx_webnet_iface: 'eth1'
+nginx_dbnet_iface: 'eth2'
+client_webnet_iface: 'eth1'
+
+db_net: '192.168.0.0/24'
+web_net: '192.168.10.0/24'
+
 
 wp_user: "wp_user"
 wp_db: "wp_db"

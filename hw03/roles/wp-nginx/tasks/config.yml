@@ -75,4 +75,4 @@
   when: wp_admin_password | length == 0
 
 - name: Setup wp
-  command: /usr/local/bin/wp core install --path={{ nginx_html_root_dir }}{{ wp_dir_prefix }}-{{ wp_version }} --url={{ wp_url }} --title={{ wp_title }} --admin_name={{ wp_admin }} --admin_password={{ wp_admin_password }} --admin_email={{ wp_admin_email }}
+  command: /usr/local/bin/wp core install --path={{ nginx_html_root_dir }}{{ wp_dir_prefix }}-{{ wp_version }} --url={{ wp_url + ':' + wp_nginx_port }} --title={{ wp_title }} --admin_name={{ wp_admin }} --admin_password={{ wp_admin_password }} --admin_email={{ wp_admin_email }}

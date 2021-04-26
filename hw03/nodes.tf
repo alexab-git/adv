@@ -31,9 +31,9 @@ resource "ah_private_network" "dbnet" {
 }
 
 resource "ah_private_network" "webnet" {
+  depends_on =  [ah_private_network.dbnet]
   ip_range = "${var.web_private_ip_range}.0/24"
   name = "Web network"
-  depends_on =  [ah_private_network.dbnet]
 }
 
 resource "ah_private_network_connection" "nginx-nodes-dbnet" {

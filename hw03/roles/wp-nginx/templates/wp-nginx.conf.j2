@@ -1,5 +1,5 @@
 server {
-   listen 80;
+   listen {{ wp_nginx_port }};
 
    # note that these lines are originally from the "location /" block
    root {{ nginx_html_root_dir }}{{ wp_dir_prefix }}-{{wp_version}};
@@ -9,6 +9,9 @@ server {
       try_files $uri $uri/ =404;
    }
 
+
+   access_log  /var/log/nginx/{{ wp_dir_prefix }}-{{wp_version}}.log  main;
+   error_log  /var/log/nginx/{{ wp_dir_prefix }}-{{wp_version}}-err.log  warn;
 
    location ~ \.php$ {
       try_files $uri =404;

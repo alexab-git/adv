@@ -1,11 +1,11 @@
 ---
-- name: Configure hostnames for nginx_nodes
-  become: true
-  hosts: nginx_nodes, db
-  roles:
-    - role: hostname-builder
-      vars:
-        interface: "{{ db_net_iface }}"
+#- name: Configure hostnames for nginx_nodes
+#  become: true
+#  hosts: nginx_nodes, db
+#  roles:
+#    - role: hostname-builder
+#      vars:
+#        interface: "{{ db_dbnet_iface }}"
 
 - name: Configure db node
   hosts: db
@@ -34,13 +34,14 @@
   roles:
     - role: nginx-phpfpm
       vars:
-        nginx_bind_port: 8080
-        nginx_bind_iface: "{{ web_net_iface }}"
+        nginx_bind_port: "8080"
+        nginx_bind_iface: "{{ nginx_webnet_iface }}"
     - role: wp-nginx
       vars:
-        wp_db_host: "{{ hostvars[groups['db'][0]]['ansible_' + db_net_iface].ipv4.address }}"
+        wp_nginx_port:  "80"
+        wp_db_host: "{{ hostvars[groups['db'][0]]['ansible_' + db_dbnet_iface].ipv4.address }}"
         wp_db_name: "{{ wp_db }}"
         wp_db_user: "{{ wp_user }}"
         wp_db_password: "{{ wp_pass }}"
-        wp_admin_password: "u#ie3yufF3"
-        wp_url: "{{ hostvars[inventory_hostname]['ansible_' + web_net_iface].ipv4.address }}"
+        wp_admin_password: "{{ wp_pass }}"
+        wp_url: "{{ hostvars[inventory_hostname]['ansible_' + nginx_webnet_iface].ipv4.address }}"
